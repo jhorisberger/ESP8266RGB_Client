@@ -1,28 +1,20 @@
 #include <Arduino.h>
-#include <ESP8266WiFi.h>
-#include <espnow.h>
 #include "radio.h"
 
-
+EspNow8266 radio;
 
 void setup() {
-
-  WiFi.mode(WIFI_STA);
 	
   // start serial port
   Serial.begin(115200);
-  Serial.println("");
-  Serial.println("ESP8266 RGB controller client Debug");
-  Serial.println("-----------------------------------");
-  Serial.print("MAC: "); Serial.println(WiFi.macAddress());
-  Serial.println("");
-  Serial.println("");
+  Serial.println("\nESP8266 RGB controller client Debug\n-----------------------------------");
+ 
 
   // Setup Pins
   pinMode(2, OUTPUT);
 
   //Setup Radio
-  RadioSetup();
+  radio.setup();
 }
 
 void loop() {
