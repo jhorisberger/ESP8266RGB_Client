@@ -1,21 +1,28 @@
 #include <Arduino.h>
 #include <espnow.h>
 #include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+#include <WiFiManager.h>
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>
+
 #include "radio.h"
 #include "crc/crc8.h"
 
 
 EspNow8266 _radio;
 CRC8 crc8;
+WiFiManager wm;
 
 uint8_t CLIENT_ID = 2;
 uint8_t broadcastMac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+bool portalRunning = false;
+
 
 
 EspNow8266::EspNow8266(void){
   crc8.begin();
 }
-
 
 // Setup Radio
 void EspNow8266::setup(void){
@@ -34,6 +41,7 @@ void EspNow8266::setup(void){
   esp_now_register_send_cb(OnDataSent);
   
   esp_now_add_peer(broadcastMac, ESP_NOW_ROLE_SLAVE, WIFI_CHANNEL, NULL, 0);
+  
 }
 
 // Callback when data is sent
@@ -103,3 +111,51 @@ void EspNow8266::printFrame(struct_frame frame){
   Serial.printf("Subset: %#x %#x %#x , Data %#x | %#x %#x %#x %#x %#x \n" , frame.Payload.SubSet_Type, frame.Payload.Subset_Index, frame.Payload.SubSet_Range, frame.Payload.Data.Command, frame.Payload.Data.Data0, frame.Payload.Data.Data1, frame.Payload.Data.Data2, frame.Payload.Data.Data3, frame.Payload.Data.Data4);
 }
 
+//Setup and start Wifi config portal
+void EspNow8266::startConfigPortal(uint16_t timeout){
+  // Callback functons
+  ArduinoOTA.onStart([]() {
+    Serial.println("OTA Start");
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\n OTA End");
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+    else if (error == OTA_END_ERROR) Serial.println("End Failed");
+  });
+
+  //Start portal
+  if(!portalRunning){
+    Serial.println("Starting Portal");
+    //wm.addParameter(&custom_mqtt_server);
+    //wm.setSaveParamsCallback(saveParamsCallback);
+    wm.setTimeout(timeout);
+    wm.setClass("invert");
+    wm.setMinimumSignalQuality(20);
+    wm.setConfigPortalBlocking(false);
+    wm.startConfigPortal();
+    portalRunning = true;
+
+    //Start OTA listener
+    ArduinoOTA.begin();
+    Serial.println("OTA Ready");
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+  }
+};
+
+// Run cyclic radio tasks
+void EspNow8266::handle(void){
+  if(portalRunning){
+    wm.process();
+    ArduinoOTA.handle();
+  }
+}
