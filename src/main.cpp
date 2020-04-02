@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "radio.h"
+#include "wm_ota.h"
 
 #include <Ticker.h>
 Ticker ticker;
@@ -8,6 +9,7 @@ Ticker ticker;
 #define SW_PIN 0
 
 EspNow8266 radio;
+wm_ota updater(SW_PIN);
 
 void tick()
 {
@@ -22,11 +24,14 @@ void setup() {
 
   // Setup Pins
   pinMode(LED_PIN, OUTPUT);
-  pinMode(SW_PIN, INPUT_PULLUP);
+
+
+
+  // Read config from FS
+  updater.readConfig();
 
   //Setup Radio
   radio.setup();
-
   ticker.attach(1.0, tick);
 }
 
@@ -35,16 +40,8 @@ uint8_t Counter = 0;
 
 void loop() {
   // put your main code here, to run repeatedly:
-  radio.handle();
-
-  // is configuration portal requested?
-  if(digitalRead(SW_PIN) == LOW) {
-    ticker.attach(0.1, tick);
-    radio.startConfigPortal(180);
-  }
+  updater.handle();
   
-
-
 /*
   Counter ++;
   if (Counter > 3) Counter = 0;

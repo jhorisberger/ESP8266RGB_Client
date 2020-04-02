@@ -40,8 +40,6 @@
             void Broadcast(struct_frame TxPayload);
             uint8_t payloadTx(struct_payload payload);
             void printFrame(struct_frame frame);
-            void handle(void);
-            void startConfigPortal(uint16_t timeout);
 
 
         private:
