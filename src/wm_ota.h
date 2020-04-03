@@ -9,18 +9,18 @@
             void readConfig(void);
             void startConfigPortal(uint16_t timeout);
             void handle(void);
+            uint8_t getDeviceID(void);
+            uint8_t getTriggerSource(void);
             
 
         private:
             WiFiManager wm;
-           // WiFiManagerParameter custom_mqtt_server;
-           // WiFiManagerParameter custom_mqtt_port;
 
             uint8_t configPortalPin;
             bool portalRunning = false;
             bool shouldSaveConfig = false;
-            char deviceID[4] ; //="254";
-            char triggerSource[4]; // = "0";
+            char deviceID[4];
+            char triggerSource[4];
 
             void saveConfigCallback(void);
     };

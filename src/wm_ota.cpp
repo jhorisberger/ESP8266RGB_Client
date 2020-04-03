@@ -26,7 +26,6 @@ void wm_ota::readConfig(void){
       if (configFile) {
         DynamicJsonDocument jsonBuffer(512);
         DeserializationError error = deserializeJson(jsonBuffer, configFile);
-        serializeJsonPretty(jsonBuffer, Serial);
         // Parsed successful
         if (!error) {
           strcpy(deviceID, jsonBuffer["deviceID"] | "254");
@@ -128,4 +127,14 @@ void wm_ota::handle(void){
 void wm_ota::saveConfigCallback (void) {
   Serial.println("Should save config");
   shouldSaveConfig = true;
+}
+
+// get current device ID
+uint8_t wm_ota::getDeviceID(void){
+    return atoi(deviceID);
+}
+
+// get trigger source
+uint8_t wm_ota::getTriggerSource(void){
+    return atoi(triggerSource);
 }
